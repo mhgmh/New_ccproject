@@ -11,13 +11,12 @@ import random
 
 
 se = requests.session()
-
 class articles(object):
 
     def Pub_article(url):
         tag = ''
         user_agent = articles.user_agent(url)
-        time.sleep(4)
+        time.sleep(10)
         headers = {
             'authority': 'm.toutiao.com',
             'method': 'GET',
@@ -30,7 +29,10 @@ class articles(object):
             'user-agent': user_agent,
         }
         urls = str(url).replace('//www','//m').replace('/a','/group/')
-        html = requests.get(urls, headers=headers, allow_redirects=False)
+        ip = requests.get('http://165704599489980799.dev.checkerproxy.org/?num=1&area_type=1&level=2').text
+        proxies = {"http": ip}
+        print("Pub_article:"+str(proxies))
+        html = requests.get(urls, headers=headers, allow_redirects=False,proxies=proxies)
         head = str(html.headers)
         if 'location' in head:
             urll = html.headers['location'] + "info/"
@@ -39,7 +41,10 @@ class articles(object):
                 if 'm.toutiao' in urll:   #判断链接地址是否是正常的提取连接
                     se.headers.clear()
                     se.headers.update(headers)
-                    alltxt = se.get(urll).text
+                    se.proxies = proxies
+                    alltxt = se.get(urll,proxies=proxies).text
+                    # respon = se.get('http://2018.ip138.com/ic.asp').text
+                    # print(respon)
                     f = json.loads(alltxt)
                     if '视频加载中' in str(f):
                         print('视频连接')
@@ -61,9 +66,15 @@ class articles(object):
                                 'upgrade-insecure-requests': '1',
                                 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36',
                             }
+
+
+
+
                             se.headers.clear()
                             se.headers.update(headers)
-                            Read = se.get(url).text
+                            se.proxies = proxies
+
+                            Read = se.get(url,proxies=proxies).text
                         except KeyError:
                             return '错误信息'
                         if 'tagInfo' in Read:  #判断是否有标签存在。
@@ -82,12 +93,16 @@ class articles(object):
                                         tag += l + "、"
                         else:
                             tag = ""
+                        se.close()
                         print(title,content,tag)
                         return title,content,tag
                 else:
+                    se.close()
                     return  '错误信息'
+            se.close()
             return '错误信息'
         else:
+            se.close()
             return '错误信息'
 
     def Blog_article(name,title,content,tags):
@@ -109,6 +124,9 @@ class articles(object):
             'referer': 'https://www.222zhe.com/wp-admin/edit.php?ids=1898',
             'cookie': 'wordpress_sec_284f142291139beef380432d2e4ec353=222zhe%7C1527565355%7CBgmz7FFfJboOsHgYAQBynuaWIf850B5iv2lxV5wlH0a%7C3c9731bb715f3db07242055314f459c50f0c21ddb6bada037b2d2852a5170a73; wordpress_logged_in_284f142291139beef380432d2e4ec353=222zhe%7C1527565355%7CBgmz7FFfJboOsHgYAQBynuaWIf850B5iv2lxV5wlH0a%7Ce1818a306f5653cd4eead92a605a71f2a02dad59ed5e92aa942516401860cd6a; Hm_lvt_1ff5481335fbc6ef1042680ebf392fa5=1526355800,1526550876,1526704447,1526888652; wp-settings-1=posts_list_mode%3Dlist%26mfold%3Do%26libraryContent%3Dbrowse%26editor%3Dtinymce%26hidetb%3D1; wp-settings-time-1=1527059299'
         }
+        ip = requests.get('http://165704599489980799.dev.checkerproxy.org/?num=1&area_type=1&level=2').text
+        proxies = {"http": ip}
+        se.proxies = proxies
         se.headers.clear()
         se.headers.update(headers)
         string = se.get("https://www.222zhe.com/wp-admin/post-new.php").text
@@ -195,14 +213,14 @@ class articles(object):
         }
         se.headers.clear()
         se.headers.update(headers)
-        respon = se.post("https://www.222zhe.com/wp-admin/post.php",data=data,allow_redirects=False).text
-        respon_x = se.get('https://www.222zhe.com/wp-admin/edit.php?post_status=publish&post_type=post').text
+        respon = se.post("https://www.222zhe.com/wp-admin/post.php",data=data,allow_redirects=False,verify=False).text
+        respon_x = se.get('https://www.222zhe.com/wp-admin/edit.php?post_status=publish&post_type=post',verify=False).text
         class_one = '<span class={this}view{this}><a href="(.*?)" rel="bookmark" aria-label="查看“{}”">查看</a>'.replace("{this}","'").format(title)
         try:
             article_url = re.compile(class_one,re.S).findall(respon_x)[0]
             print(article_url)
             bd_url = 'http://data.zz.baidu.com/urls?site=https://www.222zhe.com&token=yIZ5kYk4fSeNRTfe'
-            readtxt = requests.post(bd_url,data=article_url,verify=False).text
+            readtxt = requests.post(bd_url,data=article_url).text
             print(readtxt)
         except IndexError:
             print("暂时未获取到成功后的链接")
